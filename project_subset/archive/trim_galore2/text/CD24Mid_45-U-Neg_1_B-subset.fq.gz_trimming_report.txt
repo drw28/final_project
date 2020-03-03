@@ -1,0 +1,120 @@
+
+SUMMARISING RUN PARAMETERS
+==========================
+Input filename: /Users/dougwicks/Documents/Biochem/Final_Year/Project/analysis/rna_seq/raw-data/CD24Mid_45-U-Neg_1_B-subset.fq.gz
+Trimming mode: single-end
+Trim Galore version: 0.6.4_dev
+Cutadapt version: 2.6
+Number of cores used for trimming: 1
+Quality Phred score cutoff: 5
+Quality encoding type selected: ASCII+33
+Adapter sequence: 'AGATCGGAAGAGC' (Illumina TruSeq, Sanger iPCR; user defined)
+Maximum trimming error rate: 0.1 (default)
+Minimum required adapter overlap (stringency): 1 bp
+Minimum required sequence length before a sequence gets removed: 20 bp
+Running FastQC on the data once trimming has completed
+Output file will be GZIP compressed
+
+
+This is cutadapt 2.6 with Python 3.6.10
+Command line parameters: -j 1 -e 0.1 -q 5 -O 1 -a AGATCGGAAGAGC /Users/dougwicks/Documents/Biochem/Final_Year/Project/analysis/rna_seq/raw-data/CD24Mid_45-U-Neg_1_B-subset.fq.gz
+Processing reads on 1 core in single-end mode ...
+Finished in 7.58 s (30 us/read; 1.98 M reads/minute).
+
+=== Summary ===
+
+Total reads processed:                 250,000
+Reads with adapters:                    83,642 (33.5%)
+Reads written (passing filters):       250,000 (100.0%)
+
+Total basepairs processed:    25,000,000 bp
+Quality-trimmed:                       0 bp (0.0%)
+Total written (filtered):     24,834,237 bp (99.3%)
+
+=== Adapter 1 ===
+
+Sequence: AGATCGGAAGAGC; Type: regular 3'; Length: 13; Trimmed: 83642 times.
+
+No. of allowed errors:
+0-9 bp: 0; 10-13 bp: 1
+
+Bases preceding removed adapters:
+  A: 29.3%
+  C: 31.9%
+  G: 21.5%
+  T: 17.1%
+  none/other: 0.2%
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+1	56248	62500.0	0	56248
+2	17910	15625.0	0	17910
+3	5443	3906.2	0	5443
+4	1331	976.6	0	1331
+5	554	244.1	0	554
+6	272	61.0	0	272
+7	213	15.3	0	213
+8	224	3.8	0	224
+9	190	1.0	0	180 10
+10	168	0.2	1	147 21
+11	164	0.1	1	143 21
+12	104	0.0	1	97 7
+13	85	0.0	1	71 14
+14	81	0.0	1	76 5
+15	81	0.0	1	74 7
+16	55	0.0	1	49 6
+17	53	0.0	1	45 8
+18	32	0.0	1	30 2
+19	15	0.0	1	15
+20	20	0.0	1	18 2
+21	12	0.0	1	11 1
+22	4	0.0	1	4
+23	6	0.0	1	5 1
+24	18	0.0	1	17 1
+25	10	0.0	1	10
+26	10	0.0	1	10
+27	5	0.0	1	3 2
+28	1	0.0	1	1
+29	2	0.0	1	1 1
+30	3	0.0	1	1 2
+31	1	0.0	1	1
+32	4	0.0	1	3 1
+33	3	0.0	1	1 2
+34	1	0.0	1	1
+35	5	0.0	1	4 1
+36	3	0.0	1	3
+38	3	0.0	1	1 2
+40	2	0.0	1	2
+41	4	0.0	1	4
+42	1	0.0	1	1
+43	1	0.0	1	1
+44	2	0.0	1	2
+46	3	0.0	1	1 2
+49	2	0.0	1	1 1
+50	1	0.0	1	1
+51	3	0.0	1	2 1
+52	3	0.0	1	1 2
+56	1	0.0	1	0 1
+58	1	0.0	1	0 1
+59	1	0.0	1	0 1
+65	1	0.0	1	1
+69	2	0.0	1	1 1
+74	1	0.0	1	1
+75	1	0.0	1	1
+77	1	0.0	1	1
+78	2	0.0	1	1 1
+79	2	0.0	1	0 2
+80	5	0.0	1	1 4
+82	2	0.0	1	1 1
+83	1	0.0	1	0 1
+84	2	0.0	1	2
+85	2	0.0	1	0 2
+92	1	0.0	1	0 1
+97	2	0.0	1	0 2
+100	258	0.0	1	244 14
+
+RUN STATISTICS FOR INPUT FILE: /Users/dougwicks/Documents/Biochem/Final_Year/Project/analysis/rna_seq/raw-data/CD24Mid_45-U-Neg_1_B-subset.fq.gz
+=============================================
+250000 sequences processed in total
+Sequences removed because they became shorter than the length cutoff of 20 bp:	268 (0.1%)
+
