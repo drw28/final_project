@@ -2,3 +2,5 @@ analysis/
 docs/
 genome_dir/
 seqmonk/
+.DS_Store
+
