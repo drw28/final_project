@@ -1,22 +1,36 @@
 #key directory variables below
 
 DIR=/Volumes/Recovered_Mac/project
-analysis="${DIR}"/project_data/analysis/rna_seq
+analysis="${DIR}"/project_data/analysis/hmeDIP-seq
 raw_data="${analysis}"/raw-data
 genome_dir="${DIR}"/genome_dir
+scripts="${DIR}"/project_data/scripts/hmedip
+QC="${analysis}"/QC
 
 #Make genome and QC folders for organisation
 mkdir -p "${genome_dir}"
 
-QC="${analysis}"/QC
 mkdir -p "${QC}"
 mkdir "${QC}"/QC_1
 
-#Shorten raw-data file names
+#Merge "_p2" file names using 'for' loop - CHECK THIS
+bash "${scripts}"/merge_test.sh
 
-cd "${raw_data}"
-rename 's/_45-U-Neg//' CD24Mid_45-U-Neg*.fq.gz
-rename 's/_45-U-Neg//' CD24Neg_45-U-Neg*.fq.gz
+#ALTER FILENAMES TO CORRECTLY CAPTURE MID/NEG CELLS
+#mid-cells
+if [ -a "${raw_data}"/1*-mid* ] && [ -a "${raw_data}"/4*-mid* ] && [ -a "${raw_data}"/6*-mid* ] ; then
+  echo "filenames already altered"
+else
+  bash "${scripts}"/mid_if_filenames.sh
+fi
+
+#neg-cells
+if [ -a "${raw_data}"/2*-neg* ] && [ -a "${raw_data}"/3*-neg* ] && [ -a "${raw_data}"/5*-neg* ] && \
+[ -a "${raw_data}"/7*-neg* ] && [ -a "${raw_data}"/8*-neg* ] ; then
+  echo "filenames already altered"
+else
+  bash "${scripts}"/neg_if_filenames.sh
+fi
 
 #location of conda source and name of conda environment to run bioconda programs
 conda_env=final_project
@@ -47,25 +61,28 @@ mkdir -p "${cutadapt_QC}"
 
 #Insert forward and reverse adapters
 fwd_adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
-rev_adapter=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
 
-#trim adapters and run fastqc analysis post-trim - currently configured for paired reads (FOUND OUT WAYS TO )
-for sample in 1 3 5 7 ; do
+#mid-cells cutadapt for loop + input control
+for sample in 1 4 6 ; do
 
-  cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -A "${rev_adapter}" \
-  -o "${cutadapt}"/CD24Mid_"${sample}"_A.fq.gz -p "${cutadapt}"/CD24Mid_"${sample}"_B.fq.gz \
-  ${analysis}/raw-data/CD24Mid_"${sample}"_A.fq.gz "${analysis}"/raw-data/CD24Mid_"${sample}"_B.fq.gz > "${cutadapt_QC}"/"${sample}".cutadaptlog
+  cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -j 0 -o "${cutadapt}"/"${sample}"Bound-mid_trim.fq.gz \
+  ${analysis}/raw-data/"${sample}"Bound-mid.fq.gz > "${cutadapt_QC}"/"${sample}"Bound-mid.cutadaptlog
 
 done
 
-for sample in 2 4 6 8 ; do
+cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -j 0 -o "${cutadapt}"/4Input-mid_trim.fq.gz \
+${analysis}/raw-data/4Input-mid.fq.gz > "${cutadapt_QC}"/4Input-mid.cutadaptlog
 
-  cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -A "${rev_adapter}" \
-  -o "${cutadapt}"/CD24Neg_"${sample}"_A.fq.gz -p "${cutadapt}"/CD24Neg_"${sample}"_B.fq.gz \
-  ${analysis}/raw-data/CD24Neg_"${sample}"_A.fq.gz "${analysis}"/raw-data/CD24Neg_"${sample}"_B.fq.gz > "${cutadapt_QC}"/"${sample}".cutadaptlog
+#neg-cells cutadapt for loop + input control
+for sample in 2 3 5 7 8 ; do
+
+  cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -j 0 -o "${cutadapt}"/"${sample}"Bound-neg_trim.fq.gz \
+  ${analysis}/raw-data/"${sample}"Bound-neg.fq.gz > "${cutadapt_QC}"/"${sample}"Bound-neg.cutadaptlog
 
 done
 
+cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -j 0 -o "${cutadapt}"/5Input-neg_trim.fq.gz \
+${analysis}/raw-data/5Input-neg.fq.gz > "${cutadapt_QC}"/5Input-neg.cutadaptlog
 
 #RUN SECOND FASTQC ON TRIMMED DATA
 
@@ -115,7 +132,7 @@ fastqfolder="${analysis}"/QC/fastq-screen
 
 gunzip "${cutadapt}"/*
 mkdir "${fastqfolder}"
-fastq_screen --conf "${conf_file}" "${cutadapt}"/*.fq -outdir "${fastqfolder}"
+fastq_screen --conf "${conf_file}" "${cutadapt}"/* -outdir "${fastqfolder}"
 
 #Organise fastq-screen output folders
 
@@ -131,18 +148,17 @@ mv "${fastqfolder}"/*.png "${fastqfolder}"/png
 #insert location of genome for download within quotation marks
 genome="ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz"
 name=$(basename "${genome}")
-gzipped_name="${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa
 
 mkdir "${genome_dir}"/mouse
 
-if [ -a "${genome_dir}"/mouse/"${name}" || "${gzipped_name}" ]
+if [ -a "${genome_dir}"/mouse/"${name}" ] || [ -a "${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa ]
 then
   echo "Genomes already downloaded"
 else
   curl "${genome}" > "${genome_dir}"/mouse/"${name}"
 fi
 
-#INDEX MOUSE GENOME - LINE 128 IN RNA PIPELINE 1
+#INDEX MOUSE GENOME -
 
 #activate conda environment
 source "${conda_source}"
@@ -151,12 +167,15 @@ conda activate "${conda_env}"
 output=$( echo "${name}" | cut -d'.' -f1 )
 
 #first gunzip reference genome
-gunzip "${genome_dir}"/mouse/"${name}"
+if [ -a "${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa ]
+then
+  echo "Genome already gunzipped"
+else
+  gunzip "${genome_dir}"/mouse/"${name}"
+fi
 
 #index using hisat2-build from gunzipped file, caffeinate run to prevent mac going to sleep overnight
 cd "${DIR}"
-
-zip "${genome_dir}"/mouse/*.gz
 
 if [ -a "${genome_dir}"/mouse/Mus_musculus.8.ht2 ]
 then
@@ -173,27 +192,47 @@ mkdir "${analysis}"/mapping
 source "${conda_source}"
 conda activate "${conda_env}"
 
-#make mapping directory, gunzip fq.gz files run hisat2 programme to map reads, output hisat2 mapping stats into a text files
-gunzip "${cutadapt}"/*.gz
-hisat2_extract_splice_sites.py "${genome_dir}"/mouse/Mus_musculus.GRCm38.99.gtf > "${genome_dir}"/mouse/mouse_splice_sites.txt
+# gunzip fq.gz files run hisat2 programme to map reads, output hisat2 mapping stats into a text files
+[[ -e "${cutadapt}"/*.fa ]] || gunzip "${cutadapt}"/*.gz
 
-for sample in 1 3 5 7 ; do
+if [ -a "${genome_dir}"/mouse/mouse_splice_sites.txt ]; then
+  echo "Splice sites already generated to text file"
+else
+  hisat2_extract_splice_sites.py "${genome_dir}"/mouse/Mus_musculus.GRCm38.99.gtf > "${genome_dir}"/mouse/mouse_splice_sites.txt
+fi
+
+#hisat2 mapping - mid-cells
+source "${conda_source}"
+conda activate "${conda_env}"
+
+for sample in 1 4 6 ; do
 
   hisat2 --phred64 -x "${genome_dir}"/mouse/Mus_musculus --known-splicesite-infile "${genome_dir}"/mouse/mouse_splice_sites.txt \
-  -p 2 -1 "${cutadapt}"/CD24Mid_"${sample}"_A* -2 "${cutadapt}"/CD24Mid_"${sample}"_B* \
-  --summary-file "${analysis}"/mapping/CD24Mid_"${sample}"_hisat2_mapping.txt \
-  | samtools view -bS - > "${analysis}"/mapping/CD24Mid_"${sample}".hisat.bam
+  "${cutadapt}"/"${sample}"Bound-mid_trim.fq \
+  --summary-file "${analysis}"/mapping/"${sample}"Bound-mid_hisat2_mapping.txt \
+  | samtools view -bS - > "${analysis}"/mapping/"${sample}"Bound-mid.hisat.bam
 
 done
 
-for sample in 2 4 6 8 ; do
+hisat2 --phred64 -x "${genome_dir}"/mouse/Mus_musculus --known-splicesite-infile "${genome_dir}"/mouse/mouse_splice_sites.txt \
+"${cutadapt}"/4Input-mid_trim.fq \
+--summary-file "${analysis}"/mapping/4Input-mid_hisat2_mapping.txt \
+| samtools view -bS - > "${analysis}"/mapping/4Input-mid.hisat.bam
+
+#hisat2 mapping - neg-cells
+for sample in 2 3 5 7 8 ; do
 
   hisat2 --phred64 -x "${genome_dir}"/mouse/Mus_musculus --known-splicesite-infile "${genome_dir}"/mouse/mouse_splice_sites.txt \
-  -p 2 -1 "${cutadapt}"/CD24Neg_"${sample}"_A* -2 "${cutadapt}"/CD24Neg_"${sample}"_B* \
-  --summary-file "${analysis}"/mapping/CD24Neg_"${sample}"_hisat2_mapping.txt \
-  | samtools view -bS - > "${analysis}"/mapping/CD24Neg_"${sample}".hisat.bam
+  "${cutadapt}"/"${sample}"Bound-neg_trim.fq \
+  --summary-file "${analysis}"/mapping/"${sample}"Bound-neg_hisat2_mapping.txt \
+  | samtools view -bS - > "${analysis}"/mapping/"${sample}"Bound-neg.hisat.bam
 
 done
+
+hisat2 --phred64 -x "${genome_dir}"/mouse/Mus_musculus --known-splicesite-infile "${genome_dir}"/mouse/mouse_splice_sites.txt \
+"${cutadapt}"/5Input-neg_trim.fq \
+--summary-file "${analysis}"/mapping/5Input-neg_hisat2_mapping.txt \
+| samtools view -bS - > "${analysis}"/mapping/5Input-neg.hisat.bam
 
 mkdir -p "${analysis}"/mapping/txt
 mv "${analysis}"/mapping/*.txt "${analysis}"/mapping/txt

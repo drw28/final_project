@@ -131,11 +131,10 @@ mv "${fastqfolder}"/*.png "${fastqfolder}"/png
 #insert location of genome for download within quotation marks
 genome="ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz"
 name=$(basename "${genome}")
-gzipped_name="${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa
 
 mkdir "${genome_dir}"/mouse
 
-if [ -a "${genome_dir}"/mouse/"${name}" || "${gzipped_name}" ]
+if [ -a "${genome_dir}"/mouse/"${name}" ] || [ -a "${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa ]
 then
   echo "Genomes already downloaded"
 else
@@ -151,7 +150,12 @@ conda activate "${conda_env}"
 output=$( echo "${name}" | cut -d'.' -f1 )
 
 #first gunzip reference genome
-gunzip "${genome_dir}"/mouse/"${name}"
+if [ -a "${genome_dir}"/mouse/Mus_musculus.GRCm38.dna.primary_assembly.fa ]
+then
+  echo "Genome already gunzipped"
+else
+  gunzip "${genome_dir}"/mouse/"${name}"
+fi
 
 #index using hisat2-build from gunzipped file, caffeinate run to prevent mac going to sleep overnight
 cd "${DIR}"
