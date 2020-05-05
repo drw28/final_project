@@ -7,16 +7,16 @@ genome_dir="${DIR}"/genome_dir
 scripts="${DIR}"/project_data/scripts/hmedip
 QC="${analysis}"/QC
 
-#Make genome and QC folders for organisation
+#Make genome and quality control folders for organisation
 mkdir -p "${genome_dir}"
 
 mkdir -p "${QC}"
 mkdir "${QC}"/QC_1
 
-#Merge "_p2" file names using 'for' loop - CHECK THIS
+#Merge "_p2" file names using 'for' loop in other script - wanted to make it more line efficient
 bash "${scripts}"/merge_test.sh
 
-#ALTER FILENAMES TO CORRECTLY CAPTURE MID/NEG CELLS
+#ALTER FILENAMES TO CORRECTLY CAPTURE MID/NEG CELLS, separated mid/neg samples for troubleshooting
 #mid-cells
 if [ -a "${raw_data}"/1*-mid* ] && [ -a "${raw_data}"/4*-mid* ] && [ -a "${raw_data}"/6*-mid* ] ; then
   echo "filenames already altered"
@@ -32,7 +32,7 @@ else
   bash "${scripts}"/neg_if_filenames.sh
 fi
 
-#location of conda source and name of conda environment to run bioconda programs
+#location of conda source and name of conda environment to run bioconda packages
 conda_env=final_project
 conda_source=/Applications/anaconda3/etc/profile.d/conda.sh
 
@@ -59,7 +59,7 @@ mkdir -p "${cutadapt}"
 cutadapt_QC="${analysis}"/QC/cutadapt
 mkdir -p "${cutadapt_QC}"
 
-#Insert forward and reverse adapters
+#Insert adapters - kept name of 'fwd_adapter' from RNA pipeline, but only one as not paired-end
 fwd_adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
 
 #mid-cells cutadapt for loop + input control
@@ -95,7 +95,7 @@ mkdir -p "${cutadapt_QC}"/fastqc.zip
 mv "${cutadapt}"/*.html "${cutadapt_QC}"/html
 mv "${cutadapt}"/*_fastqc.zip "${cutadapt_QC}"/fastqc.zip
 
-#RUN MULTIQC FOR COMPARISON OF RAW-DATA AND TRIMMED DATA - NOT SURE ABOUT THIS!!!
+#RUN MULTIQC FOR COMPARISON OF RAW-DATA AND TRIMMED DATA
 
 #activate base environment
 conda activate
@@ -107,7 +107,7 @@ mv ./multiqc_data/* "${QC}"/multiqc_data
 rm -r ./multiqc_data
 mv ./multiqc_report.html "${QC}"
 
-#FASTQ-SCREEN RUN DUE TO HIGH GC SEQUENCE CONTENT
+#FASTQ-SCREEN RUN
 
 #check if indexed genomes already downloaded
 FastQ_Screen_Genomes_Path="${genome_dir}"/FastQ_Screen_Genomes
@@ -143,9 +143,9 @@ mv "${fastqfolder}"/*.html "${fastqfolder}"/html
 mv "${fastqfolder}"/*.txt "${fastqfolder}"/text
 mv "${fastqfolder}"/*.png "${fastqfolder}"/png
 
-#ADD MOUSE GENOME - make this and index genome a separate script which can run from here if genome files not present
+#ADD MOUSE GENOME
 
-#insert location of genome for download within quotation marks
+#location of genome for download, and basenaming
 genome="ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz"
 name=$(basename "${genome}")
 
@@ -237,7 +237,7 @@ hisat2 --phred64 -x "${genome_dir}"/mouse/Mus_musculus --known-splicesite-infile
 mkdir -p "${analysis}"/mapping/txt
 mv "${analysis}"/mapping/*.txt "${analysis}"/mapping/txt
 
-#RUN MULTIQC TO GET SUMMARY STATS ON mapping
+#RUN MULTIQC TO GET SUMMARY STATS ON MAPPING
 
 mkdir -p "${QC}"/hisat2_mapping
 multiqc -f "${analysis}"/mapping
