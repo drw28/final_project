@@ -12,7 +12,7 @@ QC="${analysis}"/QC
 mkdir -p "${QC}"
 mkdir "${QC}"/QC_1
 
-#Shorten raw-data file names
+#Shorten raw-data file names, just aesthetic
 
 cd "${raw_data}"
 rename 's/_45-U-Neg//' CD24Mid_45-U-Neg*.fq.gz
@@ -49,7 +49,7 @@ mkdir -p "${cutadapt_QC}"
 fwd_adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
 rev_adapter=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
 
-#trim adapters and run fastqc analysis post-trim - currently configured for paired reads (FOUND OUT WAYS TO )
+#trim adapters and run fastqc analysis post-trim
 for sample in 1 3 5 7 ; do
 
   cutadapt --quality-base=64 -q 15 -a "${fwd_adapter}" -A "${rev_adapter}" \
@@ -66,7 +66,6 @@ for sample in 2 4 6 8 ; do
 
 done
 
-
 #RUN SECOND FASTQC ON TRIMMED DATA
 
 fastqc "${cutadapt}"/*
@@ -78,7 +77,7 @@ mkdir -p "${cutadapt_QC}"/fastqc.zip
 mv "${cutadapt}"/*.html "${cutadapt_QC}"/html
 mv "${cutadapt}"/*_fastqc.zip "${cutadapt_QC}"/fastqc.zip
 
-#RUN MULTIQC FOR COMPARISON OF RAW-DATA AND TRIMMED DATA - NOT SURE ABOUT THIS!!!
+#RUN MULTIQC FOR COMPARISON OF RAW-DATA AND TRIMMED DATA
 
 #activate base environment
 conda activate
@@ -126,7 +125,7 @@ mv "${fastqfolder}"/*.html "${fastqfolder}"/html
 mv "${fastqfolder}"/*.txt "${fastqfolder}"/text
 mv "${fastqfolder}"/*.png "${fastqfolder}"/png
 
-#ADD MOUSE GENOME - make this and index genome a separate script which can run from here if genome files not present
+#ADD MOUSE GENOME
 
 #insert location of genome for download within quotation marks
 genome="ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz"
@@ -141,7 +140,7 @@ else
   curl "${genome}" > "${genome_dir}"/mouse/"${name}"
 fi
 
-#INDEX MOUSE GENOME - LINE 128 IN RNA PIPELINE 1
+#INDEX MOUSE GENOME
 
 #activate conda environment
 source "${conda_source}"
@@ -160,7 +159,7 @@ fi
 #index using hisat2-build from gunzipped file, caffeinate run to prevent mac going to sleep overnight
 cd "${DIR}"
 
-zip "${genome_dir}"/mouse/*.gz
+gunzip "${genome_dir}"/mouse/*.gz
 
 if [ -a "${genome_dir}"/mouse/Mus_musculus.8.ht2 ]
 then
@@ -196,13 +195,12 @@ for sample in 2 4 6 8 ; do
   -p 2 -1 "${cutadapt}"/CD24Neg_"${sample}"_A* -2 "${cutadapt}"/CD24Neg_"${sample}"_B* \
   --summary-file "${analysis}"/mapping/CD24Neg_"${sample}"_hisat2_mapping.txt \
   | samtools view -bS - > "${analysis}"/mapping/CD24Neg_"${sample}".hisat.bam
-
 done
 
 mkdir -p "${analysis}"/mapping/txt
 mv "${analysis}"/mapping/*.txt "${analysis}"/mapping/txt
 
-#RUN MULTIQC TO GET SUMMARY STATS ON mapping
+#RUN MULTIQC TO GET SUMMARY STATS ON MAPPING
 
 mkdir -p "${QC}"/hisat2_mapping
 multiqc -f "${analysis}"/mapping
